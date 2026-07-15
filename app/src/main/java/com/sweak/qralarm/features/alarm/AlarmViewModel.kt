@@ -78,6 +78,8 @@ class AlarmViewModel @AssistedInject constructor(
                             isAlarmSnoozed = isAlarmSnoozed,
                             isSnoozeAvailable = isSnoozeAvailable,
                             isInteractionEnabled = isInteractionEnabled,
+                            isUsingCode = it.isUsingCode,
+                            isFaceWakeAvailable = it.isFaceWakeEnabled,
                             isEmergencyAvailable = it.isUsingCode && it.isEmergencyTaskEnabled
                         )
                     }
@@ -144,10 +146,11 @@ class AlarmViewModel @AssistedInject constructor(
                         }
 
                         return@update currentState.copy(
-                            permissionsDialogState =
+                        permissionsDialogState =
                             AlarmScreenState.PermissionsDialogState(
                                 isVisible = true,
-                                cameraPermissionState = false
+                                cameraPermissionState = false,
+                                requestReason = AlarmScreenState.CameraPermissionRequest.CODE_SCAN
                             )
                         )
                     }
@@ -164,6 +167,58 @@ class AlarmViewModel @AssistedInject constructor(
                         backendEventsChannel.send(
                             AlarmScreenBackendEvent.RequestCodeScanToStopAlarm
                         )
+                    }
+
+                    return@update currentState
+                }
+            }
+            is AlarmScreenUserEvent.TryStartFaceWake -> {
+                val isFaceWakeEnabled = ::alarm.isInitialized && alarm.isFaceWakeEnabled
+
+                if (!isFaceWakeEnabled) {
+                    return
+                }
+
+                _state.update { currentState ->
+                    if (currentState.permissionsDialogState.isVisible) {
+                        if (currentState.permissionsDialogState.cameraPermissionState == true) {
+                            viewModelScope.launch {
+                                backendEventsChannel.send(
+                                    AlarmScreenBackendEvent.RequestFaceWakeToStopAlarm
+                                )
+                            }
+
+                            return@update currentState.copy(
+                                permissionsDialogState =
+                                AlarmScreenState.PermissionsDialogState(
+                                    isVisible = false
+                                )
+                            )
+                        } else {
+                            return@update currentState.copy(
+                                permissionsDialogState = currentState.permissionsDialogState.copy(
+                                    cameraPermissionState =
+                                    currentState.permissionsDialogState.cameraPermissionState?.let {
+                                        event.cameraPermissionStatus
+                                    }
+                                )
+                            )
+                        }
+                    }
+
+                    if (!event.cameraPermissionStatus) {
+                        return@update currentState.copy(
+                            permissionsDialogState =
+                            AlarmScreenState.PermissionsDialogState(
+                                isVisible = true,
+                                cameraPermissionState = false,
+                                requestReason = AlarmScreenState.CameraPermissionRequest.FACE_WAKE
+                            )
+                        )
+                    }
+
+                    viewModelScope.launch {
+                        backendEventsChannel.send(AlarmScreenBackendEvent.RequestFaceWakeToStopAlarm)
                     }
 
                     return@update currentState

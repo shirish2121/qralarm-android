@@ -2,13 +2,16 @@ package com.sweak.qralarm.features.add_edit_alarm
 
 import android.net.Uri
 import android.os.Parcelable
+import com.sweak.qralarm.BuildConfig
 import com.sweak.qralarm.core.domain.alarm.AVAILABLE_CANCEL_LOCK_DURATIONS_IN_MINUTES
+import com.sweak.qralarm.core.domain.alarm.AVAILABLE_FACE_WAKE_DURATIONS_IN_SECONDS
 import com.sweak.qralarm.core.domain.alarm.AVAILABLE_GENTLE_WAKE_UP_DURATIONS_IN_SECONDS
 import com.sweak.qralarm.core.domain.alarm.AVAILABLE_SNOOZE_DURATIONS_IN_MINUTES
 import com.sweak.qralarm.core.domain.alarm.AVAILABLE_SNOOZE_NUMBERS
 import com.sweak.qralarm.core.domain.alarm.AVAILABLE_TEMPORARY_MUTE_DURATIONS_IN_SECONDS
 import com.sweak.qralarm.core.domain.alarm.Alarm.Ringtone
 import com.sweak.qralarm.core.domain.alarm.DEFAULT_CANCEL_LOCK_DURATION_IN_MINUTES
+import com.sweak.qralarm.core.domain.alarm.DEFAULT_FACE_WAKE_DURATION_IN_SECONDS
 import com.sweak.qralarm.core.domain.alarm.DEFAULT_GENTLE_WAKE_UP_DURATION_IN_SECONDS
 import com.sweak.qralarm.core.domain.alarm.DEFAULT_SNOOZE_NUMBER_TO_DURATION_PAIR
 import com.sweak.qralarm.core.domain.alarm.DEFAULT_TEMPORARY_MUTE_DURATION_IN_SECONDS
@@ -63,6 +66,15 @@ data class AddEditAlarmFlowState(
     val availableTemporaryMuteDurationsInSeconds: List<Int> =
         AVAILABLE_TEMPORARY_MUTE_DURATIONS_IN_SECONDS,
     val isChooseTemporaryMuteDurationDialogVisible: Boolean = false,
+    val isFaceWakeEnabled: Boolean = false,
+    val faceWakeDurationInSeconds: Int = DEFAULT_FACE_WAKE_DURATION_IN_SECONDS,
+    val availableFaceWakeDurationsInSeconds: List<Int> =
+        AVAILABLE_FACE_WAKE_DURATIONS_IN_SECONDS,
+    val isChooseFaceWakeDurationDialogVisible: Boolean = false,
+    val isDoNotLeaveAlarmEnabled: Boolean = BuildConfig.DEBUG,
+    val isPowerOffGuardEnabled: Boolean = BuildConfig.DEBUG,
+    val isBlockVolumeDownEnabled: Boolean = BuildConfig.DEBUG,
+    val isKeepRingerOnEnabled: Boolean = BuildConfig.DEBUG,
     val permissionsDialogState: PermissionsDialogState = PermissionsDialogState(),
     val isDeleteAlarmDialogVisible: Boolean = false,
     val isDiscardAlarmChangesDialogVisible: Boolean = false,

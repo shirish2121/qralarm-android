@@ -67,6 +67,23 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
+        <service
+            android:name=".alarm.accessibility.QRAlarmAccessibilityService"
+            android:enabled="@bool/enable_debug_accessibility_service"
+            android:exported="true"
+            android:label="@string/qralarm_accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/qralarm_accessibility_service" />
+
+        </service>
+
         <receiver
             android:name=".alarm.receiver.AlarmReschedulingReceiver"
             android:directBootAware="true"

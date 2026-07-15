@@ -44,5 +44,7 @@ data class AlarmEntity(
     val alarmLabel: String?,
     val gentleWakeUpDurationInSeconds: Int,
     val temporaryMuteDurationInSeconds: Int,
+    @ColumnInfo(defaultValue = "FALSE") val isFaceWakeEnabled: Boolean,
+    @ColumnInfo(defaultValue = "300") val faceWakeDurationInSeconds: Int,
     val skipAlarmUntilTimeInMillis: Long?
 )

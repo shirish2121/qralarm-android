@@ -12,7 +12,7 @@ import com.sweak.qralarm.core.storage.database.model.CodeEntity
 
 @Database(
     entities = [AlarmEntity::class, CodeEntity::class],
-    version = 10,
+    version = 11,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -444,6 +444,17 @@ abstract class QRAlarmDatabase : RoomDatabase() {
 
                 db.execSQL("DROP TABLE alarm")
                 db.execSQL("ALTER TABLE alarm_new RENAME TO alarm")
+            }
+        }
+
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE alarm ADD COLUMN isFaceWakeEnabled INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "ALTER TABLE alarm ADD COLUMN faceWakeDurationInSeconds INTEGER NOT NULL DEFAULT 300"
+                )
             }
         }
     }

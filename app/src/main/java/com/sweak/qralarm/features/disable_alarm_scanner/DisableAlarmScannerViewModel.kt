@@ -69,6 +69,10 @@ class DisableAlarmScannerViewModel @AssistedInject constructor(
 
     private var lastWrongCodeWarningMillis = 0L
     private val wrongCodeWarningDelayMillis = 3000L
+    private var cameraReadyMillis = 0L
+    private var lastDetectedCodeValue: String? = null
+    private var lastDetectedCodeMillis = 0L
+    private var repeatedDetectionCount = 0
 
     init {
         viewModelScope.launch {
@@ -83,6 +87,7 @@ class DisableAlarmScannerViewModel @AssistedInject constructor(
             is DisableAlarmScannerScreenUserEvent.InitializeCamera -> viewModelScope.launch {
                 val imageAnalysisUseCase = getImageAnalysisUseCase()
                 val cameraExecutor = Executors.newSingleThreadExecutor()
+                cameraReadyMillis = System.currentTimeMillis()
 
                 imageAnalysisUseCase.setAnalyzer(cameraExecutor, getCodeAnalyzer())
 
@@ -164,6 +169,10 @@ class DisableAlarmScannerViewModel @AssistedInject constructor(
         object : CodeDetector {
             override fun onCodeFound(codeValue: String) {
                 if (shouldScan && ::alarm.isInitialized) {
+                    if (!isConfirmedDetection(codeValue)) {
+                        return
+                    }
+
                     shouldScan = false
 
                     viewModelScope.launch {
@@ -186,6 +195,26 @@ class DisableAlarmScannerViewModel @AssistedInject constructor(
                 Log.e("BarcodeDetector", exception.toString())
             }
         }
+
+    private fun isConfirmedDetection(codeValue: String): Boolean {
+        val currentTimeMillis = System.currentTimeMillis()
+
+        if (currentTimeMillis - cameraReadyMillis < MIN_SCANNER_WARM_UP_MS) {
+            return false
+        }
+
+        if (lastDetectedCodeValue == codeValue &&
+            currentTimeMillis - lastDetectedCodeMillis <= CODE_CONFIRMATION_WINDOW_MS
+        ) {
+            repeatedDetectionCount += 1
+        } else {
+            lastDetectedCodeValue = codeValue
+            repeatedDetectionCount = 1
+        }
+
+        lastDetectedCodeMillis = currentTimeMillis
+        return repeatedDetectionCount >= REQUIRED_CODE_DETECTION_COUNT
+    }
 
     private fun getCameraPreviewUseCase() =
         Preview.Builder().build().apply {
@@ -282,5 +311,11 @@ class DisableAlarmScannerViewModel @AssistedInject constructor(
                 }
             }
         }
+    }
+
+    companion object {
+        private const val MIN_SCANNER_WARM_UP_MS = 700L
+        private const val CODE_CONFIRMATION_WINDOW_MS = 1500L
+        private const val REQUIRED_CODE_DETECTION_COUNT = 2
     }
 }

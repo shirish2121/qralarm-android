@@ -13,7 +13,11 @@ data class DisableAlarmScannerRoute(
 ) : NavKey
 
 @Serializable
+data class FaceWakeRoute(
+    val idOfAlarm: Long
+) : NavKey
+
+@Serializable
 data class EmergencyRoute(
     val idOfAlarmToCancel: Long
 ) : NavKey
-

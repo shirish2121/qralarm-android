@@ -13,3 +13,7 @@ fun AudioManager.setAlarmVolume(index: Int) {
         /* no-op */
     }
 }
+
+fun AudioManager.setAlarmVolumeToMax() {
+    setAlarmVolume(getStreamMaxVolume(AudioManager.STREAM_ALARM))
+}

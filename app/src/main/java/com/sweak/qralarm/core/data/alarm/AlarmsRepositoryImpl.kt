@@ -51,6 +51,8 @@ class AlarmsRepositoryImpl @Inject constructor(
                 alarmLabel = alarm.alarmLabel,
                 gentleWakeUpDurationInSeconds = alarm.gentleWakeUpDurationInSeconds,
                 temporaryMuteDurationInSeconds = alarm.temporaryMuteDurationInSeconds,
+                isFaceWakeEnabled = alarm.isFaceWakeEnabled,
+                faceWakeDurationInSeconds = alarm.faceWakeDurationInSeconds,
                 skipAlarmUntilTimeInMillis = alarm.skipAlarmUntilTimeInMillis
             )
         )
@@ -178,6 +180,8 @@ class AlarmsRepositoryImpl @Inject constructor(
             alarmLabel = alarmEntity.alarmLabel,
             gentleWakeUpDurationInSeconds = alarmEntity.gentleWakeUpDurationInSeconds,
             temporaryMuteDurationInSeconds = alarmEntity.temporaryMuteDurationInSeconds,
+            isFaceWakeEnabled = alarmEntity.isFaceWakeEnabled,
+            faceWakeDurationInSeconds = alarmEntity.faceWakeDurationInSeconds,
             skipAlarmUntilTimeInMillis = alarmEntity.skipAlarmUntilTimeInMillis
         )
     }

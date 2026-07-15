@@ -29,6 +29,7 @@ import com.sweak.qralarm.core.ui.model.Code
 import com.sweak.qralarm.core.ui.sound.AlarmRingtonePlayer
 import com.sweak.qralarm.features.add_edit_alarm.AddEditAlarmFlowUserEvent.AddEditAlarmScreenUserEvent
 import com.sweak.qralarm.features.add_edit_alarm.AddEditAlarmFlowUserEvent.AdvancedAlarmSettingsScreenUserEvent
+import com.sweak.qralarm.features.add_edit_alarm.AddEditAlarmFlowUserEvent.SpecialAlarmSettingsScreenUserEvent
 import com.sweak.qralarm.core.domain.alarm.Code as DomainCode
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -163,7 +164,9 @@ class AddEditAlarmViewModel @AssistedInject constructor(
                             isEmergencyTaskEnabled = alarm.isEmergencyTaskEnabled,
                             alarmLabel = alarm.alarmLabel,
                             gentleWakeupDurationInSeconds = alarm.gentleWakeUpDurationInSeconds,
-                            temporaryMuteDurationInSeconds = alarm.temporaryMuteDurationInSeconds
+                            temporaryMuteDurationInSeconds = alarm.temporaryMuteDurationInSeconds,
+                            isFaceWakeEnabled = alarm.isFaceWakeEnabled,
+                            faceWakeDurationInSeconds = alarm.faceWakeDurationInSeconds
                         )
                     }
                 }
@@ -666,6 +669,53 @@ class AddEditAlarmViewModel @AssistedInject constructor(
                     )
                 }
             }
+            is AdvancedAlarmSettingsScreenUserEvent.FaceWakeEnabledChanged -> {
+                hasUnsavedChanges = true
+                _state.update { currentState ->
+                    currentState.copy(isFaceWakeEnabled = event.isEnabled)
+                }
+            }
+            is AdvancedAlarmSettingsScreenUserEvent.ChooseFaceWakeDurationDialogVisible -> {
+                _state.update { currentState ->
+                    currentState.copy(isChooseFaceWakeDurationDialogVisible = event.isVisible)
+                }
+            }
+            is AdvancedAlarmSettingsScreenUserEvent.FaceWakeDurationSelected -> {
+                if (event.newFaceWakeDurationInSeconds != state.value.faceWakeDurationInSeconds) {
+                    hasUnsavedChanges = true
+                }
+
+                _state.update { currentState ->
+                    currentState.copy(
+                        faceWakeDurationInSeconds = event.newFaceWakeDurationInSeconds,
+                        isChooseFaceWakeDurationDialogVisible = false
+                    )
+                }
+            }
+            is SpecialAlarmSettingsScreenUserEvent.DoNotLeaveAlarmEnabledChanged -> {
+                hasUnsavedChanges = true
+                _state.update { currentState ->
+                    currentState.copy(isDoNotLeaveAlarmEnabled = event.isEnabled)
+                }
+            }
+            is SpecialAlarmSettingsScreenUserEvent.PowerOffGuardEnabledChanged -> {
+                hasUnsavedChanges = true
+                _state.update { currentState ->
+                    currentState.copy(isPowerOffGuardEnabled = event.isEnabled)
+                }
+            }
+            is SpecialAlarmSettingsScreenUserEvent.BlockVolumeDownEnabledChanged -> {
+                hasUnsavedChanges = true
+                _state.update { currentState ->
+                    currentState.copy(isBlockVolumeDownEnabled = event.isEnabled)
+                }
+            }
+            is SpecialAlarmSettingsScreenUserEvent.KeepRingerOnEnabledChanged -> {
+                hasUnsavedChanges = true
+                _state.update { currentState ->
+                    currentState.copy(isKeepRingerOnEnabled = event.isEnabled)
+                }
+            }
             is AddEditAlarmScreenUserEvent.DeleteAlarmDialogVisible -> {
                 _state.update { currentState ->
                     currentState.copy(isDeleteAlarmDialogVisible = event.isVisible)
@@ -791,6 +841,8 @@ class AddEditAlarmViewModel @AssistedInject constructor(
                 alarmLabel = currentState.alarmLabel,
                 gentleWakeUpDurationInSeconds = currentState.gentleWakeupDurationInSeconds,
                 temporaryMuteDurationInSeconds = currentState.temporaryMuteDurationInSeconds,
+                isFaceWakeEnabled = currentState.isFaceWakeEnabled,
+                faceWakeDurationInSeconds = currentState.faceWakeDurationInSeconds,
                 skipAlarmUntilTimeInMillis = null
             )
 

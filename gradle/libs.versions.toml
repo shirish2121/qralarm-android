@@ -21,6 +21,8 @@ splashscreen = "1.2.0"
 materialIconsExtended = "1.7.8"
 hiltNavigationCompose = "1.3.0"
 cameraX = "1.6.1"
+mlkitFaceDetection = "16.1.7"
+mlkitPoseDetection = "18.0.0-beta5"
 zxing = "3.5.4"
 datastorePreferences = "1.2.1"
 accompanist-permissions = "0.37.3"
@@ -58,6 +60,8 @@ androidx-camera-core = { group = "androidx.camera", name = "camera-core", versio
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraX" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraX" }
 androidx-camera-compose = { group = "androidx.camera", name = "camera-compose", version.ref = "cameraX" }
+google-mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", version.ref = "mlkitFaceDetection" }
+google-mlkit-pose-detection = { group = "com.google.mlkit", name = "pose-detection", version.ref = "mlkitPoseDetection" }
 
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 

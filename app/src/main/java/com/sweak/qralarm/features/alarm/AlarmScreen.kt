@@ -62,6 +62,7 @@ fun AlarmScreen(
     isTransient: Boolean,
     onStopAlarm: () -> Unit,
     onRequestCodeScan: () -> Unit,
+    onRequestFaceWake: () -> Unit,
     onSnoozeAlarm: () -> Unit,
     onEmergencyClicked: () -> Unit
 ) {
@@ -81,6 +82,7 @@ fun AlarmScreen(
             when (event) {
                 is AlarmScreenBackendEvent.StopAlarm -> onStopAlarm()
                 is AlarmScreenBackendEvent.RequestCodeScanToStopAlarm -> onRequestCodeScan()
+                is AlarmScreenBackendEvent.RequestFaceWakeToStopAlarm -> onRequestFaceWake()
                 is AlarmScreenBackendEvent.SnoozeAlarm -> onSnoozeAlarm()
                 is AlarmScreenBackendEvent.TryTemporarilyMuteAlarm -> {
                     context.sendBroadcast(
@@ -99,11 +101,18 @@ fun AlarmScreen(
 
     OnResume {
         if (alarmScreenState.permissionsDialogState.isVisible) {
-            alarmViewModel.onEvent(
-                AlarmScreenUserEvent.TryStopAlarm(
-                    cameraPermissionStatus = cameraPermissionState.status.isGranted
+            when (alarmScreenState.permissionsDialogState.requestReason) {
+                AlarmScreenState.CameraPermissionRequest.FACE_WAKE -> alarmViewModel.onEvent(
+                    AlarmScreenUserEvent.TryStartFaceWake(
+                        cameraPermissionStatus = cameraPermissionState.status.isGranted
+                    )
                 )
-            )
+                else -> alarmViewModel.onEvent(
+                    AlarmScreenUserEvent.TryStopAlarm(
+                        cameraPermissionStatus = cameraPermissionState.status.isGranted
+                    )
+                )
+            }
         }
     }
 
@@ -116,6 +125,13 @@ fun AlarmScreen(
                 is AlarmScreenUserEvent.StopAlarmClicked -> {
                     alarmViewModel.onEvent(
                         AlarmScreenUserEvent.TryStopAlarm(
+                            cameraPermissionStatus = cameraPermissionState.status.isGranted
+                        )
+                    )
+                }
+                is AlarmScreenUserEvent.FaceWakeClicked -> {
+                    alarmViewModel.onEvent(
+                        AlarmScreenUserEvent.TryStartFaceWake(
                             cameraPermissionStatus = cameraPermissionState.status.isGranted
                         )
                     )
@@ -201,10 +217,26 @@ private fun AlarmScreenContent(
                         enabled = state.isInteractionEnabled,
                     ) {
                         Text(
-                            text = stringResource(R.string.stop),
+                            text = stringResource(
+                                if (state.isUsingCode) R.string.scan_qr_code else R.string.stop
+                            ),
                             style = MaterialTheme.typography.displaySmall,
                             modifier = Modifier.padding(all = MaterialTheme.space.small)
                         )
+                    }
+
+                    AnimatedVisibility(visible = state.isFaceWakeAvailable) {
+                        Button(
+                            onClick = { onEvent(AlarmScreenUserEvent.FaceWakeClicked) },
+                            enabled = state.isInteractionEnabled,
+                            modifier = Modifier.padding(top = MaterialTheme.space.medium)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.front_camera),
+                                style = MaterialTheme.typography.displaySmall,
+                                modifier = Modifier.padding(all = MaterialTheme.space.small)
+                            )
+                        }
                     }
 
                     AnimatedVisibility(visible = state.isSnoozeAvailable) {
@@ -254,7 +286,17 @@ private fun AlarmScreenContent(
             onCameraPermissionClick = {
                 onEvent(AlarmScreenUserEvent.RequestCameraPermission)
             },
-            onAllPermissionsGranted = { onEvent(AlarmScreenUserEvent.StopAlarmClicked) },
+            onAllPermissionsGranted = {
+                onEvent(
+                    if (state.permissionsDialogState.requestReason ==
+                        AlarmScreenState.CameraPermissionRequest.FACE_WAKE
+                    ) {
+                        AlarmScreenUserEvent.FaceWakeClicked
+                    } else {
+                        AlarmScreenUserEvent.StopAlarmClicked
+                    }
+                )
+            },
             onDismissRequest = { onEvent(AlarmScreenUserEvent.HideMissingPermissionsDialog) }
         )
     }

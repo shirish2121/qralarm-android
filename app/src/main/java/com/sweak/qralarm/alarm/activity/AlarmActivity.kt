@@ -4,14 +4,17 @@ import android.app.KeyguardManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.OnBackPressedCallback
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.net.toUri
@@ -20,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import com.sweak.qralarm.BuildConfig
 import com.sweak.qralarm.alarm.service.AlarmService
 import com.sweak.qralarm.app.activity.MainActivity
 import com.sweak.qralarm.core.designsystem.theme.QRAlarmTheme
@@ -29,12 +33,14 @@ import com.sweak.qralarm.core.domain.user.model.Theme
 import com.sweak.qralarm.core.navigation.routes.AlarmRoute
 import com.sweak.qralarm.core.navigation.routes.DisableAlarmScannerRoute
 import com.sweak.qralarm.core.navigation.routes.EmergencyRoute
+import com.sweak.qralarm.core.navigation.routes.FaceWakeRoute
 import com.sweak.qralarm.core.navigation.Navigator
 import com.sweak.qralarm.core.navigation.rememberNavigationState
 import com.sweak.qralarm.core.navigation.toEntries
 import com.sweak.qralarm.features.alarm.AlarmScreen
 import com.sweak.qralarm.features.disable_alarm_scanner.DisableAlarmScannerScreen
 import com.sweak.qralarm.features.emergency.task.EmergencyScreen
+import com.sweak.qralarm.features.face_wake.FaceWakeScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
@@ -51,6 +57,7 @@ class AlarmActivity : FragmentActivity() {
 
     private var isLaunchedFromMainActivity: Boolean = false
     private var lastNavigateUpTime: Long = 0L
+    private var alarmId: Long = 0L
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,8 +76,14 @@ class AlarmActivity : FragmentActivity() {
         }
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(enabled = BuildConfig.DEBUG) {
+                override fun handleOnBackPressed() = Unit
+            }
+        )
 
-        val alarmId = intent.extras?.getLong(EXTRA_ALARM_ID) ?: 0
+        alarmId = intent.extras?.getLong(EXTRA_ALARM_ID) ?: 0
         isLaunchedFromMainActivity =
             intent.extras?.getBoolean(EXTRA_LAUNCHED_FROM_MAIN_ACTIVITY) == true
 
@@ -116,6 +129,9 @@ class AlarmActivity : FragmentActivity() {
                                     )
                                 )
                             },
+                            onRequestFaceWake = {
+                                navigator.navigate(FaceWakeRoute(idOfAlarm = alarmId))
+                            },
                             onSnoozeAlarm = {
                                 lifecycleScope.launch {
                                     stopService(alarmId = alarmId)
@@ -137,6 +153,11 @@ class AlarmActivity : FragmentActivity() {
                     }
 
                     entry<DisableAlarmScannerRoute> { route ->
+                        DisposableEffect(Unit) {
+                            isAlarmSubScreenActive = true
+                            onDispose { isAlarmSubScreenActive = false }
+                        }
+
                         DisableAlarmScannerScreen(
                             idOfAlarm = route.idOfAlarm,
                             isDisablingBeforeAlarmFired = route.isDisablingBeforeAlarmFired,
@@ -248,7 +269,44 @@ class AlarmActivity : FragmentActivity() {
                         )
                     }
 
+                    entry<FaceWakeRoute> { route ->
+                        DisposableEffect(Unit) {
+                            isAlarmSubScreenActive = true
+                            onDispose { isAlarmSubScreenActive = false }
+                        }
+
+                        FaceWakeScreen(
+                            idOfAlarm = route.idOfAlarm,
+                            onAlarmDisabled = {
+                                lifecycleScope.launch {
+                                    stopService(alarmId)
+
+                                    navigator.goBack()
+                                    delay(ALARM_CONFIRMATION_DISPLAY_DURATION)
+                                    finish()
+
+                                    if (isLaunchedFromMainActivity) {
+                                        startActivity(
+                                            Intent(
+                                                this@AlarmActivity,
+                                                MainActivity::class.java
+                                            )
+                                        )
+                                    }
+                                }
+                            },
+                            onCameraInitializationError = {
+                                navigator.goBack()
+                            }
+                        )
+                    }
+
                     entry<EmergencyRoute> { route ->
+                        DisposableEffect(Unit) {
+                            isAlarmSubScreenActive = true
+                            onDispose { isAlarmSubScreenActive = false }
+                        }
+
                         EmergencyScreen(
                             idOfAlarmToCancel = route.idOfAlarmToCancel,
                             onCloseClicked = {
@@ -291,6 +349,46 @@ class AlarmActivity : FragmentActivity() {
         }
     }
 
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (BuildConfig.DEBUG &&
+            AlarmService.isRunning &&
+            event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+        ) {
+            return true
+        }
+
+        return super.dispatchKeyEvent(event)
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        relaunchAlarmScreenIfRequired()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        relaunchAlarmScreenIfRequired()
+    }
+
+    private fun relaunchAlarmScreenIfRequired() {
+        if (!BuildConfig.DEBUG || !AlarmService.isRunning || isFinishing) {
+            return
+        }
+
+        lifecycleScope.launch {
+            delay(150)
+            if (!isFinishing && AlarmService.isRunning) {
+                startActivity(
+                    Intent(this@AlarmActivity, AlarmActivity::class.java).apply {
+                        putExtra(EXTRA_ALARM_ID, alarmId)
+                        putExtra(EXTRA_LAUNCHED_FROM_MAIN_ACTIVITY, isLaunchedFromMainActivity)
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    }
+                )
+            }
+        }
+    }
+
     private suspend fun stopService(alarmId: Long) {
         alarmsRepository.setAlarmRunning(
             alarmId = alarmId,
@@ -311,6 +409,7 @@ class AlarmActivity : FragmentActivity() {
     companion object {
         const val EXTRA_ALARM_ID = "alarmId"
         const val EXTRA_LAUNCHED_FROM_MAIN_ACTIVITY = "launchedFromMainActivity"
+        var isAlarmSubScreenActive = false
 
         private val ALARM_CONFIRMATION_DISPLAY_DURATION = 3.seconds
     }

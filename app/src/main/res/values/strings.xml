@@ -67,6 +67,16 @@
     <string name="temporary_mute">Temporary mute</string>
     <string name="gentle_wake_up_description">Alarm volume will increase for the specified time.</string>
     <string name="temporary_mute_description">Alarm will be muted for the specified time after clicking STOP when using QR/Bar code.</string>
+    <string name="face_wake">Front camera wake</string>
+    <string name="face_wake_description">Use the front camera to mute the alarm only while you are sitting upright.</string>
+    <string name="face_wake_duration">Front camera duration</string>
+    <string name="face_wake_duration_description">Stay in front of the camera for this long to stop the alarm.</string>
+    <string name="front_camera">Front camera</string>
+    <string name="scan_qr_code">Scan QR code</string>
+    <string name="stay_in_front_of_camera">Sit upright in full view</string>
+    <string name="face_detected_alarm_muted">Sitting position detected - alarm muted</string>
+    <string name="face_not_detected_alarm_ringing">Full sitting posture not detected - alarm ringing</string>
+    <string name="alarm_will_stop_after">Alarm stops after %1$s</string>
     <string name="only_once">Only once</string>
     <string name="custom">Custom</string>
     <string name="number_of_snoozes">Number of snoozes:</string>
@@ -163,6 +173,11 @@
     <string name="not_now">Not now</string>
     <string name="qralarm_pro_package_name" translatable="false">com.sweak.qralarm.pro</string>
     <string name="special_settings">Special settings</string>
+    <string name="qralarm_accessibility_service_label">QRAlarm special settings</string>
+    <string name="qralarm_accessibility_service_description">Lets QRAlarm keep the alarm screen visible and block volume-down while an alarm is ringing.</string>
+    <string name="enable_accessibility_service">Enable accessibility service</string>
+    <string name="accessibility_service_required_description">Required for Do not leave alarm and Block volume down to work reliably.</string>
+    <string name="accessibility_service_enabled">Accessibility service enabled</string>
     <string name="do_not_leave_alarm">Do not leave alarm</string>
     <string name="do_not_leave_alarm_description">Keep displaying alarm screen when the alarm is ringing.</string>
     <string name="block_volume_down">Block volume down</string>

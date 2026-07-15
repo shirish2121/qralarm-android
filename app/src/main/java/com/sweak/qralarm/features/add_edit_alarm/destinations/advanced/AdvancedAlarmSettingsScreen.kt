@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,7 @@ import com.sweak.qralarm.core.ui.components.ToggleSetting
 import com.sweak.qralarm.features.add_edit_alarm.destinations.add_edit.getCancelLockDurationAbbreviatedString
 import com.sweak.qralarm.features.add_edit_alarm.destinations.add_edit.getSecondsDurationString
 import com.sweak.qralarm.features.add_edit_alarm.destinations.advanced.components.ChooseCancelLockDurationBottomSheet
+import com.sweak.qralarm.features.add_edit_alarm.destinations.advanced.components.ChooseFaceWakeDurationBottomSheet
 import com.sweak.qralarm.features.add_edit_alarm.destinations.advanced.components.ChooseGentleWakeUpDurationBottomSheet
 import com.sweak.qralarm.features.add_edit_alarm.destinations.advanced.components.ChooseTemporaryMuteDurationBottomSheet
 
@@ -146,6 +148,46 @@ private fun AdvancedAlarmSettingsScreenContent(
                             state.temporaryMuteDurationInSeconds
                         )
                     )
+
+                    HorizontalDivider(
+                        thickness = 1.dp,
+                        color = LocalContentColor.current,
+                        modifier = Modifier.padding(horizontal = MaterialTheme.space.medium)
+                    )
+
+                    ToggleSetting(
+                        isChecked = state.isFaceWakeEnabled,
+                        onCheckedChange = {
+                            onEvent(
+                                AdvancedAlarmSettingsScreenUserEvent
+                                    .FaceWakeEnabledChanged(isEnabled = it)
+                            )
+                        },
+                        title = stringResource(R.string.face_wake),
+                        description = stringResource(R.string.face_wake_description)
+                    )
+
+                    if (state.isFaceWakeEnabled) {
+                        HorizontalDivider(
+                            thickness = 1.dp,
+                            color = LocalContentColor.current,
+                            modifier = Modifier.padding(horizontal = MaterialTheme.space.medium)
+                        )
+
+                        ChoiceSetting(
+                            onClick = {
+                                onEvent(
+                                    AdvancedAlarmSettingsScreenUserEvent
+                                        .ChooseFaceWakeDurationDialogVisible(isVisible = true)
+                                )
+                            },
+                            title = stringResource(R.string.face_wake_duration),
+                            description = stringResource(R.string.face_wake_duration_description),
+                            choiceName = getFaceWakeDurationString(
+                                state.faceWakeDurationInSeconds
+                            )
+                        )
+                    }
                 }
 
                 if (state.isCodeEnabled) {
@@ -246,6 +288,20 @@ private fun AdvancedAlarmSettingsScreenContent(
         )
     }
 
+    if (state.isChooseFaceWakeDurationDialogVisible) {
+        ChooseFaceWakeDurationBottomSheet(
+            initialFaceWakeDurationInSeconds = state.faceWakeDurationInSeconds,
+            availableFaceWakeDurationsInSeconds = state.availableFaceWakeDurationsInSeconds,
+            onDismissRequest = { newFaceWakeDurationInSeconds ->
+                onEvent(
+                    AdvancedAlarmSettingsScreenUserEvent.FaceWakeDurationSelected(
+                        newFaceWakeDurationInSeconds = newFaceWakeDurationInSeconds
+                    )
+                )
+            }
+        )
+    }
+
     if (state.isChooseCancelLockDurationDialogVisible) {
         ChooseCancelLockDurationBottomSheet(
             initialCancelLockDurationInMinutes = state.cancelLockDurationInMinutes,
@@ -258,6 +314,21 @@ private fun AdvancedAlarmSettingsScreenContent(
                 )
             }
         )
+    }
+}
+
+@Composable
+private fun getFaceWakeDurationString(durationInSeconds: Int): String {
+    return when {
+        durationInSeconds >= 3600 && durationInSeconds % 3600 == 0 -> {
+            val hours = durationInSeconds / 3600
+            pluralStringResource(R.plurals.hours, hours, hours)
+        }
+        durationInSeconds >= 60 && durationInSeconds % 60 == 0 -> {
+            val minutes = durationInSeconds / 60
+            pluralStringResource(R.plurals.minutes, minutes, minutes)
+        }
+        else -> getSecondsDurationString(durationInSeconds)
     }
 }
 

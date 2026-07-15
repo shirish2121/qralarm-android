@@ -95,6 +95,15 @@ sealed class AddEditAlarmFlowUserEvent {
         data class TemporaryMuteDurationSelected(
             val newTemporaryMuteDurationInSeconds: Int
         ) : AdvancedAlarmSettingsScreenUserEvent()
+        data class FaceWakeEnabledChanged(
+            val isEnabled: Boolean
+        ) : AdvancedAlarmSettingsScreenUserEvent()
+        data class ChooseFaceWakeDurationDialogVisible(
+            val isVisible: Boolean
+        ) : AdvancedAlarmSettingsScreenUserEvent()
+        data class FaceWakeDurationSelected(
+            val newFaceWakeDurationInSeconds: Int
+        ) : AdvancedAlarmSettingsScreenUserEvent()
         data class OpenCodeLinkEnabledChanged(
             val isEnabled: Boolean
         ) : AdvancedAlarmSettingsScreenUserEvent()
@@ -112,6 +121,18 @@ sealed class AddEditAlarmFlowUserEvent {
     sealed class SpecialAlarmSettingsScreenUserEvent : AddEditAlarmFlowUserEvent() {
         data object OnCancelClicked : SpecialAlarmSettingsScreenUserEvent()
         data object TryUseSpecialAlarmSettings : SpecialAlarmSettingsScreenUserEvent()
+        data class DoNotLeaveAlarmEnabledChanged(
+            val isEnabled: Boolean
+        ) : SpecialAlarmSettingsScreenUserEvent()
+        data class PowerOffGuardEnabledChanged(
+            val isEnabled: Boolean
+        ) : SpecialAlarmSettingsScreenUserEvent()
+        data class BlockVolumeDownEnabledChanged(
+            val isEnabled: Boolean
+        ) : SpecialAlarmSettingsScreenUserEvent()
+        data class KeepRingerOnEnabledChanged(
+            val isEnabled: Boolean
+        ) : SpecialAlarmSettingsScreenUserEvent()
     }
 
     sealed class AlarmsChainSettingsScreenUserEvent : AddEditAlarmFlowUserEvent() {
